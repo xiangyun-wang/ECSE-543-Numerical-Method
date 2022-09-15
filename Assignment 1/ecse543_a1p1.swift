@@ -97,45 +97,40 @@ func cholesky_decomposition(A : [[Double]]) -> [[Double]]? {
     return output
 }
 
-func find_half_band(A: [[Double]]) -> Int {
-    let n = A.count
-    var band = 0
-    for i in 0...n-1 {
-        for j in 0...i {
-            
-        }
-    }
-}
+// func find_half_band(A: [[Double]]) -> Int {
+    // initially set band = 0, 
+    // loop over all rows
+    // counter add until first non-zero element is met in a row (N_zero)
+    // if i+1-N_zero > band, then band = i+1-N_zero
+    // return band
+// }
 
-func chelesky_decomposition_optimized(A: [[Double]]) -> [Double]? {
-   let n = A.count
-    var extra_term: Double
-    var output = Array(repeating: Array(repeating: 0.0, count: n), count: n)
-    var k: Int
-    for i in 0...n-1 {
-        for j in 0...i {
-            extra_term = 0
-            k = 0
-            while (k<j){
-                extra_term += output[i][k] * output[j][k]
-                k += 1;
+func chelesky_decomposition_optimized_bandwidth_forward(A: [[Double]], RHS: [Double], band: Int) -> ([[Double]], [Double])? {
+    let n = A.count
+    var A_a = A
+    var RHS_a = RHS
+    var i_range: Int
+
+    for j in 0...n-1 {
+        if A_a[j][j] <= 0 {
+            return nil
+        }
+        A_a[j][j] = sqrt(A_a[j][j])
+        RHS_a[j] = RHS_a[j]/A_a[j][j]
+        if j+band-1 > n-1 {
+            i_range = n-1
+        }else{
+            i_range = j+band-1
+        }
+        for i in j+1...i_range {   // for optimized, it should be i in j+1...j+(band-1) or j+1...n-1 if j+(band-1) > n-1
+            A_a[i][j] = A_a[i][j]/A_a[j][j]
+            RHS_a[i] = RHS_a[i] - A_a[i][j]*RHS_a[j]
+            for k in j+1...i {
+                A_a[i][k] = A_a[i][k] - A_a[i][j]*A_a[k][j]
             }
-            // ----- implies that A is not a symmetric positive definite matrix -----
-            if A[i][j] - extra_term <= 0 {
-                return nil
-            }
-            // ----- end of check for SPD ------
-            if i == j {
-                output[i][j] = sqrt(A[i][i] - extra_term)
-            } else {
-                output[i][j] = 1.0 / output[j][j] * (A[i][j] - extra_term)
-            }
-            // if (output[i][j] == 0) {
-            //     return nil
-            // }
         }
     }
-    return output 
+    return (A_a, RHS_a)
 }
 
 func cheleskySolver(A: [[Double]], b: [Double]) -> [Double]? {
@@ -158,6 +153,6 @@ func PSD_Generation(size: Int) -> [[Double]]? {
     return nil
 }
 
-func Read_Circuit_File(Dir: String) {
+// func Read_Circuit_File(Dir: String) {
 
-}
+// }
