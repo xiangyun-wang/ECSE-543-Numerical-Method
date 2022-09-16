@@ -80,7 +80,7 @@ func cholesky_decomposition(A : [[Double]]) -> [[Double]]? {
                 k += 1;
             }
             // ----- implies that A is not a symmetric positive definite matrix -----
-            if A[i][j] - extra_term <= 0 {
+            if A[i][j] - extra_term < 0 {
                 return nil
             }
             // ----- end of check for SPD ------
@@ -134,6 +134,9 @@ func cholesky_decomposition_optimized_bandwidth_forward(A: [[Double]], RHS: [Dou
         }
         A_a[j][j] = sqrt(A_a[j][j])
         RHS_a[j] = RHS_a[j]/A_a[j][j]
+        if j == n-1 {
+            break
+        }
         if j+band-1 > n-1 {
             i_range = n-1
         }else{
@@ -164,6 +167,7 @@ func choleskySolver(A: [[Double]], b: [Double]) -> [Double]? {
 
 func choleskySolver_Optimized(A: [[Double]], b: [Double]) -> [Double]? {
     let band = find_half_band(A: A) 
+    print("band: " + String(band))
     let (L, y) = cholesky_decomposition_optimized_bandwidth_forward(A: A, RHS: b, band: band)
     if L == nil {
         return nil
@@ -175,9 +179,9 @@ func choleskySolver_Optimized(A: [[Double]], b: [Double]) -> [Double]? {
 //     return false
 // }
 
-func dotproduct_vector(A: [[Double]], b:[Double]) -> [Double]? {
-    var output = Array(repeating: 0.0, count: b.count)
-    for i in 0...b.count-1 {
+func dotproduct_vector(A: [[Double]], b:[Double]) -> [Double] {
+    var output = Array(repeating: 0.0, count: A.count)
+    for i in 0...A.count-1 {
         for j in 0...b.count-1 {
             output[i] += A[i][j] * b[j]
         }
@@ -185,10 +189,21 @@ func dotproduct_vector(A: [[Double]], b:[Double]) -> [Double]? {
     return output
 }
 
+// need to check
+func dotproduct_matrix(A: [[Double]], B: [[Double]] -> [[Double]]){
+    var output:[[Double]] = [[]]
+    let vector_dimension = B.count
+    let B_transpose = transpose(B)
+    for i in 0...B.count-1{
+        output.append(dotproduct_vector(A:A, b:B_transpose[i]))
+    }
+    return transpose(A: output)
+}
+
 func transpose(A: [[Double]]) -> [[Double]]{
-    var output = A
+    var output = Array(repeating: Array(repeating: 0.0, count: A.count), count: A[0].count)
     for i in 0...A.count-1 {
-        for j in 0...A.count-1 {
+        for j in 0...A[0].count-1 {
             output[j][i] = A[i][j]
         }
     }
@@ -216,6 +231,10 @@ func Read_Circuit_File(Dir: String) -> [(String, String, Double, Double, Double)
     return new_output
 }
 
+func Read_Matrix_File(Dir: String) -> [[Double]] {
+
+}
+
 func print_vector(vector: [Double]){
     for i in 0...vector.count-1{
         print(vector[i])
@@ -229,7 +248,7 @@ func Solve_Simple_Circuit(A_reduced: [[Double]], Dir: String) -> [Double]{
     return []
 }
 
-let A = [[6.0, 15.0, 55],[15, 55, 225],[55, 225, 979]]
+let A = [[6.0, 0, 0],[0, 55, 225],[0, 225, 979]]
 
 let b = [1.0,2.0,3.0]
 
