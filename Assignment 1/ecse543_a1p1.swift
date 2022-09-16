@@ -97,13 +97,30 @@ func cholesky_decomposition(A : [[Double]]) -> [[Double]]? {
     return output
 }
 
-// func find_half_band(A: [[Double]]) -> Int {
+func find_half_band(A: [[Double]]) -> Int {
+    var band: Int = 0
+    var N_Zero: Int = 0
+    for i in 0...A.count-1 {
+        N_Zero = 0
+        for j in 0...i{
+            if A[i][j] == 0{
+                N_Zero += 1;
+            }else{
+                break
+            }
+        }
+        if i+1-N_Zero > band {
+            band = i+1-N_Zero        
+        }
+    }
+
+    return band
     // initially set band = 0, 
     // loop over all rows
     // counter add until first non-zero element is met in a row (N_zero)
     // if i+1-N_zero > band, then band = i+1-N_zero
     // return band
-// }
+}
 
 func chelesky_decomposition_optimized_bandwidth_forward(A: [[Double]], RHS: [Double], band: Int) -> ([[Double]], [Double])? {
     let n = A.count
@@ -142,11 +159,23 @@ func cheleskySolver(A: [[Double]], b: [Double]) -> [Double]? {
 // }
 
 func dotproduct_vector(A: [[Double]], b:[Double]) -> [Double]? {
-    return nil
+    var output = Array(repeating: 0.0, count: b.count)
+    for i in 0...b.count-1 {
+        for j in 0...b.count-1 {
+            output[i] += A[i][j] * b[j]
+        }
+    }
+    return output
 }
 
-func transpose(A: [[Double]]) -> [[Double]]? {
-    return nil
+func transpose(A: [[Double]]) -> [[Double]]{
+    var output = A
+    for i in 0...A.count-1 {
+        for j in 0...A.count-1 {
+            output[j][i] = A[i][j]
+        }
+    }
+    return output
 }
 
 func PSD_Generation(size: Int) -> [[Double]]? {
