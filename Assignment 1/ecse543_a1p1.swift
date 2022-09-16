@@ -122,7 +122,7 @@ func find_half_band(A: [[Double]]) -> Int {
     // return band
 }
 
-func chelesky_decomposition_optimized_bandwidth_forward(A: [[Double]], RHS: [Double], band: Int) -> ([[Double]], [Double])? {
+func cholesky_decomposition_optimized_bandwidth_forward(A: [[Double]], RHS: [Double], band: Int) -> ([[Double]]?, [Double]?) {
     let n = A.count
     var A_a = A
     var RHS_a = RHS
@@ -130,7 +130,7 @@ func chelesky_decomposition_optimized_bandwidth_forward(A: [[Double]], RHS: [Dou
 
     for j in 0...n-1 {
         if A_a[j][j] <= 0 {
-            return nil
+            return (nil, nil)
         }
         A_a[j][j] = sqrt(A_a[j][j])
         RHS_a[j] = RHS_a[j]/A_a[j][j]
@@ -150,8 +150,25 @@ func chelesky_decomposition_optimized_bandwidth_forward(A: [[Double]], RHS: [Dou
     return (A_a, RHS_a)
 }
 
-func cheleskySolver(A: [[Double]], b: [Double]) -> [Double]? {
-    return nil
+func choleskySolver(A: [[Double]], b: [Double]) -> [Double]? {
+    let L = cholesky_decomposition(A: A)
+    if L == nil {
+        return nil
+    }
+    // forward
+    let y = forward(Lower: L!, b: b)  
+    let solution = backward(Upper: transpose(A: L!), b: y!)
+    
+    return solution
+}
+
+func choleskySolver_Optimized(A: [[Double]], b: [Double]) -> [Double]? {
+    let band = find_half_band(A: A) 
+    let (L, y) = cholesky_decomposition_optimized_bandwidth_forward(A: A, RHS: b, band: band)
+    if L == nil {
+        return nil
+    }
+    return backward(Upper: transpose(A: L!), b: y!) 
 }
 
 // func PSD_Check(A: [[Double]]) -> Bool {
@@ -198,6 +215,28 @@ func Read_Circuit_File(Dir: String) -> [(String, String, Double, Double, Double)
     }
     return new_output
 }
+
+func print_vector(vector: [Double]){
+    for i in 0...vector.count-1{
+        print(vector[i])
+    }
+}
+
+func Solve_Simple_Circuit(A_reduced: [[Double]], Dir: String) -> [Double]{
+    
+
+    
+    return []
+}
+
+let A = [[6.0, 15.0, 55],[15, 55, 225],[55, 225, 979]]
+
+let b = [1.0,2.0,3.0]
+
+var solution = choleskySolver(A: A, b: b)
+print_vector(vector: solution!)
+// var solution1 = choleskySolver_Optimized(A:A, b:b)
+// print_vector(vector: solution1!)
 
 let read_test = Read_Circuit_File(Dir: "test.txt")
 print(read_test[0])
