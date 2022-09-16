@@ -182,6 +182,22 @@ func PSD_Generation(size: Int) -> [[Double]]? {
     return nil
 }
 
-// func Read_Circuit_File(Dir: String) {
+func Read_Circuit_File(Dir: String) -> [(String, String, Double, Double, Double)] {
+    var output: [String]
+    var tmp: [String]
+    var new_output: [(String, String, Double, Double, Double)] = []
+    do {
+        let file_read = try String(contentsOfFile: Dir)
+        output = (file_read.split(separator: "\n").map{String($0)})
+        for element in output {
+            tmp = element.split(separator: " ").map{String($0)}
+            new_output.append((tmp[0], tmp[1], Double(tmp[2])!, Double(tmp[3])!, Double(tmp[4])!))
+        }
+    } catch{
+        return []
+    }
+    return new_output
+}
 
-// }
+let read_test = Read_Circuit_File(Dir: "test.txt")
+print(read_test[0])
