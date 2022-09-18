@@ -334,82 +334,17 @@ func Solve_Simple_Circuit(Matrix_Dir: String, Circuit_Dir: String) -> [Double]{
     return output!
 }
 
-let A = [[6.0, 0, 0],[0, 55, 225],[0, 225, 979]]
-
-let b = [1.0,2.0,3.0]
-
-var test1 = Array(repeating: Array(repeating: 0.0, count: 25), count: 16)
-var test2 = Array(repeating: Array(repeating: 0.0, count: 25), count: 25)
-for i in 0...test2.count-1 {
-    test2[i][i] = 1.0
-}
-test1[0][0] = 1
-test1[0][1] = 1
-test1[1][2] = 1
-test1[1][3] = 1
-test1[2][4] = 1
-test1[2][5] = 1
-test1[3][6] = 1
-test1[3][7] = 1
-test1[4][8] = 1
-test1[4][9] = 1
-test1[5][10] = 1
-test1[5][11] = 1
-test1[6][12] = 1
-test1[7][13] = 1
-test1[7][14] = 1
-test1[8][15] = 1
-test1[8][16] = 1
-test1[9][17] = 1
-test1[10][18] = 1
-test1[11][19] = 1
-test1[11][20] = 1
-test1[12][21] = 1
-test1[13][22] = 1
-test1[14][23] = 1
-test1[15][24] = 1
-
-
-
-test1[1][0] = -1
-test1[2][1] = -1
-test1[3][2] = -1
-test1[4][3] = -1
-test1[4][4] = -1
-test1[5][5] = -1
-test1[6][6] = -1
-test1[7][7] = -1
-test1[7][8] = -1
-test1[8][9] = -1
-test1[8][10] = -1
-test1[9][11] = -1
-test1[10][12] = -1
-test1[10][13] = -1
-test1[11][14] = -1
-test1[11][15] = -1
-test1[12][16] = -1
-test1[12][17] = -1
-test1[13][18] = -1
-test1[13][19] = -1
-test1[14][20] = -1
-test1[14][21] = -1
-test1[15][22] = -1
-test1[15][23] = -1
-test1[0][24] = -1
-
-test1.remove(at: 0)
-// var solution = choleskySolver(A: A, b: b)
-// print_vector(vector: solution!)
-// var solution1 = choleskySolver_Optimized(A:A, b:b)
-// print_vector(vector: solution1!)
-
-// let read_test = Read_Circuit_File(Dir: "test.txt")
-// print(read_test[0])
 
 func Find_Eqv_Resistance(N: Int, R: Double) -> [[Double]] {
     let N_R = N*(N-1)*2
     var A = Array(repeating: Array(repeating: 0.0, count: (N_R+1)), count: (N*N))
-    var counter = 0
+    var y = Array(repeating: Array(repeating: 0.0, count: N_R+1), count: N_R+1)
+    let J = Array(repeating: 0.0, count: N_R+1)
+    var E = Array(repeating: 0.0, count: N_R+1)
+    for i in 0...y.count-1 {
+        y[i][i] = 1.0/R
+    }
+    E[N_R] = -100
     var column_to_write = 0
     for i in 1...N*N-1 {
         if (i < N-1 && i > 0) {
@@ -439,7 +374,7 @@ func Find_Eqv_Resistance(N: Int, R: Double) -> [[Double]] {
             A[i][column_to_write+N-1] = -1
             A[i][column_to_write+2*N-1] = 1
             // right boarder
-            column_to_write += 4
+            column_to_write += N
         } else if (i>N*(N-1) && i < N*N-1){
             // top boarder
             A[i][column_to_write] = -1
@@ -455,7 +390,24 @@ func Find_Eqv_Resistance(N: Int, R: Double) -> [[Double]] {
             column_to_write += 1
         }
     }
-    return A
+    A.remove(at: 0)
+
+    let A_a = dotproduct_matrix(A: dotproduct_matrix(A: A, B: y), B: transpose(A: A))
+    //print("A --- Passed")
+    let b_b = dotproduct_vector(A: A,b: subtract(A: J,B: dotproduct_vector(A: y,b: E)))
+    //print("b --- Passed")
+    //let output = choleskySolver_Optimized(A: A, b: b)
+    //let output = choleskySolver(A: A_a, b: b_b)
+    let start = DispatchTime.now()
+    //let output = choleskySolver(A: A_a, b: b_b)
+    let output = choleskySolver_Optimized(A: A_a, b: b_b)
+    let end = DispatchTime.now()
+    let nanoTime = end.uptimeNanoseconds - start.uptimeNanoseconds
+    print(Double(nanoTime)/1000000) // milisecon
+    //choleskySolver_Optimized
+    //let Req = R*output![N*N-2]/(1-output![N*N-2])
+    let Req = output![output!.count-1]*R/(100-output![output!.count-1])
+    return [[Req]]
     // A completed
 }
 
@@ -465,5 +417,24 @@ func Find_Eqv_Resistance(N: Int, R: Double) -> [[Double]] {
 
 // var solution = Solve_Simple_Circuit(Matrix_Dir: "test_5_A_reduced.txt", Circuit_Dir: "test_5_circuit.txt")
 // print(solution)
+// .removeat()
 
-print(Find_Eqv_Resistance(N: 2, R: 1.0))
+
+let A = [[6.0, 0, 0],[0, 55, 225],[0, 225, 979]]
+
+let b = [1.0,2.0,3.0]
+
+
+// var solution = choleskySolver(A: A, b: b)
+// print_vector(vector: solution!)
+// var solution1 = choleskySolver_Optimized(A:A, b:b)
+// print_vector(vector: solution1!)
+
+// let read_test = Read_Circuit_File(Dir: "test.txt")
+// print(read_test[0])
+let z = Find_Eqv_Resistance(N: 15, R: 100.0)
+print(z)
+// for element in z {
+//     print(element)
+// }
+//print(Find_Eqv_Resistance(N: 20, R: 100.0))
