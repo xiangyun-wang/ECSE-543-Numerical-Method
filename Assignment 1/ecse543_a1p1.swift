@@ -80,7 +80,7 @@ func cholesky_decomposition(A : [[Double]]) -> [[Double]]? {
                 k += 1;
             }
             // ----- implies that A is not a symmetric positive definite matrix -----
-            if A[i][j] - extra_term < 0 {
+            if (i == j) && (A[i][j] - extra_term < 0) {
                 return nil
             }
             // ----- end of check for SPD ------
@@ -122,6 +122,35 @@ func find_half_band(A: [[Double]]) -> Int {
     // return band
 }
 
+// -----------------------------------------------------------------
+func cholesky_decomposition_optimized(A: [[Double]], RHS: [Double]) -> ([[Double]]?, [Double]?) {
+    let n = A.count
+    var A_a = A
+    var RHS_a = RHS
+
+    for j in 0...n-1 {
+        if A_a[j][j] <= 0 {
+            return (nil, nil)
+        }
+        A_a[j][j] = sqrt(A_a[j][j])
+        RHS_a[j] = RHS_a[j]/A_a[j][j]
+        if j == n-1 {
+            break
+        }
+
+        for i in j+1...n-1 {   // for optimized, it should be i in j+1...j+(band-1) or j+1...n-1 if j+(band-1) > n-1
+            A_a[i][j] = A_a[i][j]/A_a[j][j]
+            RHS_a[i] = RHS_a[i] - A_a[i][j]*RHS_a[j]
+            for k in j+1...i {
+                A_a[i][k] = A_a[i][k] - A_a[i][j]*A_a[k][j]
+            }
+        }
+    }
+    return (A_a, RHS_a)
+}
+// -----------------------------------------------------------------
+
+
 func cholesky_decomposition_optimized_bandwidth_forward(A: [[Double]], RHS: [Double], band: Int) -> ([[Double]]?, [Double]?) {
     let n = A.count
     var A_a = A
@@ -154,15 +183,21 @@ func cholesky_decomposition_optimized_bandwidth_forward(A: [[Double]], RHS: [Dou
 }
 
 func choleskySolver(A: [[Double]], b: [Double]) -> [Double]? {
-    let L = cholesky_decomposition(A: A)
+    // let L = cholesky_decomposition(A: A)
+    // if L == nil {
+    //     return nil
+    // }
+    // // forward
+    // let y = forward(Lower: L!, b: b)  
+    // let solution = backward(Upper: transpose(A: L!), b: y!)
+    // return solution
+    
+    let (L, y) = cholesky_decomposition_optimized(A: A, RHS: b)
     if L == nil {
         return nil
     }
-    // forward
-    let y = forward(Lower: L!, b: b)  
-    let solution = backward(Upper: transpose(A: L!), b: y!)
-    
-    return solution
+
+    return backward(Upper: transpose(A: L!), b: y!) 
 }
 
 func choleskySolver_Optimized(A: [[Double]], b: [Double]) -> [Double]? {
@@ -190,11 +225,10 @@ func dotproduct_vector(A: [[Double]], b:[Double]) -> [Double] {
 }
 
 // need to check
-func dotproduct_matrix(A: [[Double]], B: [[Double]] -> [[Double]]){
-    var output:[[Double]] = [[]]
-    let vector_dimension = B.count
-    let B_transpose = transpose(B)
-    for i in 0...B.count-1{
+func dotproduct_matrix(A: [[Double]], B: [[Double]]) -> [[Double]]{
+    var output:[[Double]] = []
+    let B_transpose = transpose(A: B)
+    for i in 0...B_transpose.count-1{
         output.append(dotproduct_vector(A:A, b:B_transpose[i]))
     }
     return transpose(A: output)
@@ -232,7 +266,20 @@ func Read_Circuit_File(Dir: String) -> [(String, String, Double, Double, Double)
 }
 
 func Read_Matrix_File(Dir: String) -> [[Double]] {
-
+    var output: [String]
+    var tmp: [Double]
+    var new_output: [[Double]] = []
+    do {
+        let file_read = try String(contentsOfFile: Dir)
+        output = (file_read.split(separator: "\n").map{String($0)})
+        for element in output {
+            tmp = element.split(separator: " ").map{Double($0)!}
+            new_output.append(tmp)
+        }
+    } catch{
+        return []
+    }
+    return new_output
 }
 
 func print_vector(vector: [Double]){
@@ -241,21 +288,182 @@ func print_vector(vector: [Double]){
     }
 }
 
-func Solve_Simple_Circuit(A_reduced: [[Double]], Dir: String) -> [Double]{
-    
+func Extract_Circuit(circuit: [(String, String, Double, Double, Double)]) -> ([[Double]],[Double],[Double]){
+    var y = Array(repeating: Array(repeating: 0.0, count: circuit.count), count: circuit.count)
+    var E = Array(repeating: 0.0, count: circuit.count)
+    var J = Array(repeating: 0.0, count: circuit.count)
+    for i in 0...circuit.count-1 {
+        let (_,_,voltage,resistance,current) = circuit[i]
+        E[i] = voltage
+        if resistance < 0{
+            y[i][i] = 0
+        }else{
+            y[i][i] = 1.0/resistance
+        }
+        J[i] = current
+    }
+    return (y,E,J)
+}
 
+func subtract(A: [Double], B: [Double]) -> [Double]{
+    var output = A
+    for i in 0...A.count-1{
+        output[i] = A[i] - B[i]
+    }
+    return output
+}
+
+func Solve_Simple_Circuit(Matrix_Dir: String, Circuit_Dir: String) -> [Double]{
     
-    return []
+    let circuit = Read_Circuit_File(Dir: Circuit_Dir)
+    //print("Circuit Read --- Passed")
+    let reduced_A = Read_Matrix_File(Dir: Matrix_Dir)
+    //print("Matrix Read --- Passed")
+    let (y, E, J) = Extract_Circuit(circuit: circuit)    
+    //print("Circuit Extract --- Passed")
+    // let tmp1 = dotproduct_matrix(A: reduced_A, B: y)
+    // print("temp1 --- Passed" + String(tmp1.count) + " " + String(tmp1[0].count))
+    // let tmp2 = transpose(A: reduced_A)
+    // print("temp2 --- Passed" + String(tmp2.count) + " " + String(tmp2[0].count))
+    let A = dotproduct_matrix(A: dotproduct_matrix(A: reduced_A, B: y), B: transpose(A: reduced_A))
+    //print("A --- Passed")
+    let b = dotproduct_vector(A: reduced_A,b: subtract(A: J,B: dotproduct_vector(A: y,b: E)))
+    //print("b --- Passed")
+    //let output = choleskySolver_Optimized(A: A, b: b)
+    let output = choleskySolver(A: A, b: b)
+    return output!
 }
 
 let A = [[6.0, 0, 0],[0, 55, 225],[0, 225, 979]]
 
 let b = [1.0,2.0,3.0]
 
-var solution = choleskySolver(A: A, b: b)
-print_vector(vector: solution!)
+var test1 = Array(repeating: Array(repeating: 0.0, count: 25), count: 16)
+var test2 = Array(repeating: Array(repeating: 0.0, count: 25), count: 25)
+for i in 0...test2.count-1 {
+    test2[i][i] = 1.0
+}
+test1[0][0] = 1
+test1[0][1] = 1
+test1[1][2] = 1
+test1[1][3] = 1
+test1[2][4] = 1
+test1[2][5] = 1
+test1[3][6] = 1
+test1[3][7] = 1
+test1[4][8] = 1
+test1[4][9] = 1
+test1[5][10] = 1
+test1[5][11] = 1
+test1[6][12] = 1
+test1[7][13] = 1
+test1[7][14] = 1
+test1[8][15] = 1
+test1[8][16] = 1
+test1[9][17] = 1
+test1[10][18] = 1
+test1[11][19] = 1
+test1[11][20] = 1
+test1[12][21] = 1
+test1[13][22] = 1
+test1[14][23] = 1
+test1[15][24] = 1
+
+
+
+test1[1][0] = -1
+test1[2][1] = -1
+test1[3][2] = -1
+test1[4][3] = -1
+test1[4][4] = -1
+test1[5][5] = -1
+test1[6][6] = -1
+test1[7][7] = -1
+test1[7][8] = -1
+test1[8][9] = -1
+test1[8][10] = -1
+test1[9][11] = -1
+test1[10][12] = -1
+test1[10][13] = -1
+test1[11][14] = -1
+test1[11][15] = -1
+test1[12][16] = -1
+test1[12][17] = -1
+test1[13][18] = -1
+test1[13][19] = -1
+test1[14][20] = -1
+test1[14][21] = -1
+test1[15][22] = -1
+test1[15][23] = -1
+test1[0][24] = -1
+
+test1.remove(at: 0)
+// var solution = choleskySolver(A: A, b: b)
+// print_vector(vector: solution!)
 // var solution1 = choleskySolver_Optimized(A:A, b:b)
 // print_vector(vector: solution1!)
 
-let read_test = Read_Circuit_File(Dir: "test.txt")
-print(read_test[0])
+// let read_test = Read_Circuit_File(Dir: "test.txt")
+// print(read_test[0])
+
+func Find_Eqv_Resistance(N: Int, R: Double) -> [[Double]] {
+    let N_R = N*(N-1)*2
+    var A = Array(repeating: Array(repeating: 0.0, count: (N_R+1)), count: (N*N))
+    var counter = 0
+    var column_to_write = 0
+    for i in 1...N*N-1 {
+        if (i < N-1 && i > 0) {
+            // lower boarder
+            A[i][column_to_write] = -1
+            A[i][column_to_write+1] = 1
+            A[i][column_to_write+N] = 1
+            column_to_write += 1
+        } else if ( i == N-1 || i == N*(N-1)){
+            // corner
+            A[i][column_to_write] = -1
+            A[i][column_to_write+N] = 1
+            column_to_write += 1
+        }else if (i == N*N-1){
+            // top right corner
+            A[i][column_to_write] = -1
+            A[i][column_to_write+N-1] = -1
+            A[i][column_to_write+N] = 1
+        }  else if (i%N==0){
+            A[i][column_to_write] = -1
+            A[i][column_to_write+N] = 1
+            A[i][column_to_write+2*N-1] = 1
+            // left boarder
+            column_to_write += 1
+        } else if (i%N==N-1){
+            A[i][column_to_write] = -1
+            A[i][column_to_write+N-1] = -1
+            A[i][column_to_write+2*N-1] = 1
+            // right boarder
+            column_to_write += 4
+        } else if (i>N*(N-1) && i < N*N-1){
+            // top boarder
+            A[i][column_to_write] = -1
+            A[i][column_to_write+N-1] = -1
+            A[i][column_to_write+N] = 1
+            column_to_write += 1
+        }else{
+            // middle
+            A[i][column_to_write] = -1
+            A[i][column_to_write+N-1] = -1
+            A[i][column_to_write+N] = 1
+            A[i][column_to_write+2*N-1] = 1
+            column_to_write += 1
+        }
+    }
+    return A
+    // A completed
+}
+
+// let test3 = dotproduct_matrix(A: dotproduct_matrix(A: test1, B: test2), B: transpose(A: test1))
+
+// print(find_half_band(A: test3))
+
+// var solution = Solve_Simple_Circuit(Matrix_Dir: "test_5_A_reduced.txt", Circuit_Dir: "test_5_circuit.txt")
+// print(solution)
+
+print(Find_Eqv_Resistance(N: 2, R: 1.0))
