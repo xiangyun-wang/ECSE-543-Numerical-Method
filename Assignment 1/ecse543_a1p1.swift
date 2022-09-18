@@ -1,15 +1,9 @@
 import Foundation
-// print("Hello world!")
-// var a = 1
-// var b: Int
-// b = a
-// print(sqrt(4))
 
 /*
  * Input: Lower Triangular Matrix, RHS vector
  * Output: Matrix solution
  */
-print ("Hello Swift")
 
 func forward(Lower : [[Double]], b : [Double]) -> [Double]? {
     let n = b.count                                     // matrix dimension
@@ -183,15 +177,7 @@ func cholesky_decomposition_optimized_bandwidth_forward(A: [[Double]], RHS: [Dou
 }
 
 func choleskySolver(A: [[Double]], b: [Double]) -> [Double]? {
-    // let L = cholesky_decomposition(A: A)
-    // if L == nil {
-    //     return nil
-    // }
-    // // forward
-    // let y = forward(Lower: L!, b: b)  
-    // let solution = backward(Upper: transpose(A: L!), b: y!)
-    // return solution
-    
+
     let (L, y) = cholesky_decomposition_optimized(A: A, RHS: b)
     if L == nil {
         return nil
@@ -209,10 +195,6 @@ func choleskySolver_Optimized(A: [[Double]], b: [Double]) -> [Double]? {
     }
     return backward(Upper: transpose(A: L!), b: y!) 
 }
-
-// func PSD_Check(A: [[Double]]) -> Bool {
-//     return false
-// }
 
 func dotproduct_vector(A: [[Double]], b:[Double]) -> [Double] {
     var output = Array(repeating: 0.0, count: A.count)
@@ -313,29 +295,28 @@ func subtract(A: [Double], B: [Double]) -> [Double]{
     return output
 }
 
-func Solve_Simple_Circuit(Matrix_Dir: String, Circuit_Dir: String) -> [Double]{
+func Simple_Circuit_A_b(Matrix_Dir: String, Circuit_Dir: String) -> ([[Double]], [Double]){
     
     let circuit = Read_Circuit_File(Dir: Circuit_Dir)
-    //print("Circuit Read --- Passed")
     let reduced_A = Read_Matrix_File(Dir: Matrix_Dir)
-    //print("Matrix Read --- Passed")
     let (y, E, J) = Extract_Circuit(circuit: circuit)    
-    //print("Circuit Extract --- Passed")
-    // let tmp1 = dotproduct_matrix(A: reduced_A, B: y)
-    // print("temp1 --- Passed" + String(tmp1.count) + " " + String(tmp1[0].count))
-    // let tmp2 = transpose(A: reduced_A)
-    // print("temp2 --- Passed" + String(tmp2.count) + " " + String(tmp2[0].count))
     let A = dotproduct_matrix(A: dotproduct_matrix(A: reduced_A, B: y), B: transpose(A: reduced_A))
-    //print("A --- Passed")
     let b = dotproduct_vector(A: reduced_A,b: subtract(A: J,B: dotproduct_vector(A: y,b: E)))
-    //print("b --- Passed")
-    //let output = choleskySolver_Optimized(A: A, b: b)
-    let output = choleskySolver(A: A, b: b)
-    return output!
+    //let output = choleskySolver(A: A, b: b)
+    return (A, b)
+}
+
+func Solve_Circuit(Circuit: ([[Double]], [Double]), Optimize: Bool) -> [Double]{
+    let (A, b) = Circuit
+    if Optimize {
+        return choleskySolver_Optimized(A: A, b: b)!
+    } else {
+        return choleskySolver(A: A, b: b)!
+    }
 }
 
 
-func Find_Eqv_Resistance(N: Int, R: Double) -> [[Double]] {
+func Mesh_Circuit_Generation(N: Int, R: Double, V: Double) -> ([[Double]], [Double]) {
     let N_R = N*(N-1)*2
     var A = Array(repeating: Array(repeating: 0.0, count: (N_R+1)), count: (N*N))
     var y = Array(repeating: Array(repeating: 0.0, count: N_R+1), count: N_R+1)
@@ -344,7 +325,7 @@ func Find_Eqv_Resistance(N: Int, R: Double) -> [[Double]] {
     for i in 0...y.count-1 {
         y[i][i] = 1.0/R
     }
-    E[N_R] = -100
+    E[N_R] = -V
     var column_to_write = 0
     for i in 1...N*N-1 {
         if (i < N-1 && i > 0) {
@@ -395,46 +376,27 @@ func Find_Eqv_Resistance(N: Int, R: Double) -> [[Double]] {
     let A_a = dotproduct_matrix(A: dotproduct_matrix(A: A, B: y), B: transpose(A: A))
     //print("A --- Passed")
     let b_b = dotproduct_vector(A: A,b: subtract(A: J,B: dotproduct_vector(A: y,b: E)))
-    //print("b --- Passed")
-    //let output = choleskySolver_Optimized(A: A, b: b)
-    //let output = choleskySolver(A: A_a, b: b_b)
+
+    return (A_a, b_b)
+}
+
+func find_Req(N: Int, R: Double, V: Double, Optimize: Bool) -> (Double, Double){
+    let mesh_circuit = Mesh_Circuit_Generation(N: N, R: R, V: V)
     let start = DispatchTime.now()
-    //let output = choleskySolver(A: A_a, b: b_b)
-    let output = choleskySolver_Optimized(A: A_a, b: b_b)
+    let v_nodes = Solve_Circuit(Circuit: mesh_circuit, Optimize: Optimize)
     let end = DispatchTime.now()
-    let nanoTime = end.uptimeNanoseconds - start.uptimeNanoseconds
-    print(Double(nanoTime)/1000000) // milisecon
-    //choleskySolver_Optimized
-    //let Req = R*output![N*N-2]/(1-output![N*N-2])
-    let Req = output![output!.count-1]*R/(100-output![output!.count-1])
-    return [[Req]]
-    // A completed
+    //print(Double(end.uptimeNanoseconds - start.uptimeNanoseconds)/1000000) // milisecon
+    let Req = v_nodes[v_nodes.count-1]*R/(V-v_nodes[v_nodes.count-1])
+    return (Req, Double(end.uptimeNanoseconds - start.uptimeNanoseconds)/1000000)
 }
 
 // let test3 = dotproduct_matrix(A: dotproduct_matrix(A: test1, B: test2), B: transpose(A: test1))
 
 // print(find_half_band(A: test3))
 
-// var solution = Solve_Simple_Circuit(Matrix_Dir: "test_5_A_reduced.txt", Circuit_Dir: "test_5_circuit.txt")
-// print(solution)
-// .removeat()
+var solution = Solve_Circuit(Circuit: Simple_Circuit_A_b(Matrix_Dir: "test_5_A_reduced.txt", Circuit_Dir: "test_5_circuit.txt"), Optimize: false)
+print(solution)
 
-
-let A = [[6.0, 0, 0],[0, 55, 225],[0, 225, 979]]
-
-let b = [1.0,2.0,3.0]
-
-
-// var solution = choleskySolver(A: A, b: b)
-// print_vector(vector: solution!)
-// var solution1 = choleskySolver_Optimized(A:A, b:b)
-// print_vector(vector: solution1!)
-
-// let read_test = Read_Circuit_File(Dir: "test.txt")
-// print(read_test[0])
-let z = Find_Eqv_Resistance(N: 15, R: 100.0)
-print(z)
-// for element in z {
-//     print(element)
-// }
-//print(Find_Eqv_Resistance(N: 20, R: 100.0))
+let (Req, time_consumed) = find_Req(N: 10, R: 100.0, V: 100, Optimize: false)
+print(Req)
+print(time_consumed)
