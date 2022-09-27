@@ -394,9 +394,73 @@ func find_Req(N: Int, R: Double, V: Double, Optimize: Bool) -> (Double, Double){
 
 // print(find_half_band(A: test3))
 
-var solution = Solve_Circuit(Circuit: Simple_Circuit_A_b(Matrix_Dir: "test_5_A_reduced.txt", Circuit_Dir: "test_5_circuit.txt"), Optimize: false)
-print(solution)
+// var solution = Solve_Circuit(Circuit: Simple_Circuit_A_b(Matrix_Dir: "test_5_A_reduced.txt", Circuit_Dir: "test_5_circuit.txt"), Optimize: false)
+// print(solution)
 
-let (Req, time_consumed) = find_Req(N: 10, R: 100.0, V: 100, Optimize: false)
-print(Req)
-print(time_consumed)
+// let (Req, time_consumed) = find_Req(N: 10, R: 100.0, V: 100, Optimize: false)
+// print(Req)
+// print(time_consumed)
+
+
+//-------------------------- part 3 start ---------------------------
+func find_residue(matrix : [[Double]]) -> Double {  // need to change
+    var residue = 0.0;
+    var possible_residue = 0.0;
+    for i in 1...matrix.count-2 {
+        for j in 1...matrix.count-2 {
+            possible_residue = -4 * matrix[i][j] + matrix[i][j-1] + matrix[i][j+1] + matrix[i-1][j] + matrix[i+1][j]
+            if possible_residue > residue {
+                residue = possible_residue
+            }
+        }
+    }
+    return residue
+}
+
+func finite_difference_SOR(h: Double, w: Double, threshold: Double) -> [[Double]]{
+    let inner_voltage = 110.0
+    let outer_voltage = 0.0
+    let inner_x = 0.06/h
+    let inner_y = 0.08/h
+    let free_top = 0.1
+    let free_right = 0.1
+    let outer_x = 0
+    let outer_y = 0
+    let x_range_discret = 0.1/h-1
+    let y_range_discret = 0.1/h-1
+
+    var grid_potential = Array(repeating: Array(repeating: 0.0, count: y_range_discret+1), count: x_range_discret+1)
+    var iteration = 0
+    var residue = Double.greatestFiniteMagnitude
+    var tmp = 0.0
+
+    for j in inner_y...grid_potential[0].count-1 {
+        grid_potential[inner_x][j] = 110.0
+    }
+
+    for i in inner_x...grid_potential.count-1 {
+        grid_potential[i][inner_y] = 110.0
+    }
+
+    while (residue > threshold) {
+        for i in 1...x_range_discret{
+            for j in 1...y_range_discret{
+                if !(i >=  inner_x && j >= inner_y) {
+                    if i == x_range_discret {       // right boundary
+                        tmp = 2 * grid_potential[i-1][j] + grid_potential[i][j-1] + grid_potential[i][j+1] 
+                    } else if j == y_range_discret {    // top boundary
+                        tmp = 2 * grid_potential[i][j-1] + grid_potential[i-1][j] + grid_potential[i+1][j] 
+                    } else {
+                        tmp = grid_potential[i][j+1] + grid_potential[i][j-1] + grid_potential[i-1][j] + grid_potential[i+1][j] 
+                    }
+                    grid_potential[i][j] = (1-w) * grid_potential[i][j] + w/4.0*tmp
+                }
+            }
+        }
+
+        residue  = find_residue(grid_potential)
+        iteration += iteration
+    }
+    return grid_potential
+}
+//-------------------------- part 3 end ---------------------------
