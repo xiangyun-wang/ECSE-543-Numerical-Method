@@ -403,45 +403,56 @@ func find_Req(N: Int, R: Double, V: Double, Optimize: Bool) -> (Double, Double){
 
 
 //-------------------------- part 3 start ---------------------------
-func find_residue(matrix : [[Double]]) -> Double {  // need to change
-    var residue = 0.0;
-    var possible_residue = 0.0;
-    for i in 1...matrix.count-2 {
-        for j in 1...matrix.count-2 {
-            possible_residue = -4 * matrix[i][j] + matrix[i][j-1] + matrix[i][j+1] + matrix[i-1][j] + matrix[i+1][j]
-            if possible_residue > residue {
-                residue = possible_residue
+func find_residue(matrix : [[Double]], inner_x : Int, inner_y : Int) -> Double {  // need to change
+    var tmp = 0.0
+    var possible_residue = 0.0
+    var residue = 0.0
+    for i in 1...matrix.count-1{
+            for j in 1...matrix.count-1{
+                if !(i >=  inner_x && j >= inner_y) {
+                    if i == matrix.count-1 {       // right boundary
+                        tmp = 2 * matrix[i-1][j] + matrix[i][j-1] + matrix[i][j+1] 
+                    } else if j == matrix.count-1 {    // top boundary
+                        tmp = 2 * matrix[i][j-1] + matrix[i-1][j] + matrix[i+1][j] 
+                    } else {
+                        tmp = matrix[i][j+1] + matrix[i][j-1] + matrix[i-1][j] + matrix[i+1][j] 
+                    }
+                    possible_residue = -4 * matrix[i][j] + tmp
+                    if possible_residue > residue {
+                        residue = possible_residue
+                    }
+                }
             }
         }
-    }
     return residue
 }
 
-func finite_difference_SOR(h: Double, w: Double, threshold: Double) -> [[Double]]{
+func finite_difference_SOR(h: Double, w: Double, threshold: Double) -> ([[Double]], Int){
     let inner_voltage = 110.0
-    let outer_voltage = 0.0
-    let inner_x = 0.06/h
-    let inner_y = 0.08/h
+    let inner_x = Int(0.06/h)
+    let inner_y = Int(0.08/h)
     let free_top = 0.1
     let free_right = 0.1
-    let outer_x = 0
-    let outer_y = 0
-    let x_range_discret = 0.1/h-1
-    let y_range_discret = 0.1/h-1
-
+    let x_range_discret = Int(0.1/h)
+    let y_range_discret = Int(0.1/h)
     var grid_potential = Array(repeating: Array(repeating: 0.0, count: y_range_discret+1), count: x_range_discret+1)
     var iteration = 0
     var residue = Double.greatestFiniteMagnitude
     var tmp = 0.0
 
     for j in inner_y...grid_potential[0].count-1 {
-        grid_potential[inner_x][j] = 110.0
+        grid_potential[inner_x][j] = inner_voltage
     }
+
 
     for i in inner_x...grid_potential.count-1 {
-        grid_potential[i][inner_y] = 110.0
+        grid_potential[i][inner_y] = inner_voltage
     }
 
+    print(grid_potential)
+
+
+    
     while (residue > threshold) {
         for i in 1...x_range_discret{
             for j in 1...y_range_discret{
@@ -458,9 +469,64 @@ func finite_difference_SOR(h: Double, w: Double, threshold: Double) -> [[Double]
             }
         }
 
-        residue  = find_residue(grid_potential)
-        iteration += iteration
+        residue  = find_residue(matrix: grid_potential, inner_x: inner_x, inner_y: inner_y)
+        iteration += 1
     }
-    return grid_potential
+    return (grid_potential, iteration)
+}
+
+func finite_difference_jacobi(h: Double, threshold: Double) -> ([[Double]], Int){
+    let inner_voltage = 110.0
+    let inner_x = Int(0.06/h)
+    let inner_y = Int(0.08/h)
+    let free_top = 0.1
+    let free_right = 0.1
+    let x_range_discret = Int(0.1/h)
+    let y_range_discret = Int(0.1/h)
+    var grid_potential = Array(repeating: Array(repeating: 0.0, count: y_range_discret+1), count: x_range_discret+1)
+    var iteration = 0
+    var residue = Double.greatestFiniteMagnitude
+    var tmp = 0.0
+
+    for j in inner_y...grid_potential[0].count-1 {
+        grid_potential[inner_x][j] = inner_voltage
+    }
+
+
+    for i in inner_x...grid_potential.count-1 {
+        grid_potential[i][inner_y] = inner_voltage
+    }
+
+
+    
+    while (residue > threshold) {
+        for i in 1...x_range_discret{
+            for j in 1...y_range_discret{
+                if !(i >=  inner_x && j >= inner_y) {
+                    if i == x_range_discret {       // right boundary
+                        tmp = 2 * grid_potential[i-1][j] + grid_potential[i][j-1] + grid_potential[i][j+1] 
+                    } else if j == y_range_discret {    // top boundary
+                        tmp = 2 * grid_potential[i][j-1] + grid_potential[i-1][j] + grid_potential[i+1][j] 
+                    } else {
+                        tmp = grid_potential[i][j+1] + grid_potential[i][j-1] + grid_potential[i-1][j] + grid_potential[i+1][j] 
+                    }
+                    grid_potential[i][j] = tmp/4.0
+                }
+            }
+        }
+
+        residue  = find_residue(matrix: grid_potential, inner_x: inner_x, inner_y: inner_y)
+        iteration += 1
+    }
+    return (grid_potential, iteration)
 }
 //-------------------------- part 3 end ---------------------------
+
+let (potential, iter) = finite_difference_SOR(h: 0.02, w: 1.9, threshold: 0.00001)
+print(potential)
+print(iter)
+
+let (potential_j, iter_j) = finite_difference_jacobi(h: 0.02, threshold: 0.00001)
+print(potential_j)
+print(iter_j)
+//print(iter_j)j)
