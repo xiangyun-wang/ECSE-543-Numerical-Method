@@ -1,0 +1,1 @@
+potential = SIMPLE2D_M('mesh.dat')
