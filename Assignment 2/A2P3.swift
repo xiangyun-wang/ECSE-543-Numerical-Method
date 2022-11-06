@@ -72,7 +72,7 @@ func addition(A: [Double], B: [Double]) -> [Double]{
     return output
 }
 
-func multiplication_vector(a: [Double], c: [Double]) -> [Double]{
+func multiplication_vector(a: [Double], c: Double) -> [Double]{
     var output = a
     for i in 0...a.count-1{
         output[i] = c * a[i]
@@ -112,12 +112,36 @@ func transpose(A: [[Double]]) -> [[Double]]{
     return output
 }
 
-func transpose_vector(a: [Double] -> [[Double]]){
+func transpose_vector(a: [Double]) -> [[Double]]{
     var output = Array(repeating: Array(repeating: 0.0, count: 1), count: a.count)
     for i in 0...a.count-1 {
         output[i][1] = a[i]
     }
     return output
+}
+
+func find_half_band(A: [[Double]]) -> Int {
+    // initially set band = 0, 
+    // loop over all rows
+    // counter add until first non-zero element is met in a row (N_zero)
+    // if i+1-N_zero > band, then band = i+1-N_zero
+    // return band
+    var band: Int = 0
+    var N_Zero: Int = 0
+    for i in 0...A.count-1 {
+        N_Zero = 0
+        for j in 0...i{
+            if A[i][j] == 0{
+                N_Zero += 1;
+            }else{
+                break
+            }
+        }
+        if i+1-N_Zero > band {
+            band = i+1-N_Zero        
+        }
+    }
+    return band
 }
 
 func cholesky_decomposition(A: [[Double]], RHS: [Double]) -> ([[Double]]?, [Double]?) {
@@ -192,7 +216,6 @@ func cholesky_decomposition_optimized_bandwidth_forward(A: [[Double]], RHS: [Dou
 
 func choleskySolver_Optimized(A: [[Double]], b: [Double]) -> [Double]? {
     let band = find_half_band(A: A) 
-    //print("N: " +  String(Int(sqrt(Double(b.count+1)))) + ", Matrix Size: " + String(b.count) + ", Band: " + String(band))
     let (L, y) = cholesky_decomposition_optimized_bandwidth_forward(A: A, RHS: b, band: band)
     if L == nil {
         return nil
@@ -200,27 +223,29 @@ func choleskySolver_Optimized(A: [[Double]], b: [Double]) -> [Double]? {
     return backward(Upper: transpose(A: L!), b: y!) 
 }
 
-func CG_solve(A:[[Double]],b:[Double], size: Int, threshold: Double -> [Double]){
-    var x = Array(repeating: 0.0, count: size)
+func CG_solve(A:[[Double]],b:[Double], threshold: Double) -> [Double]{
+    var x = Array(repeating: 0.0, count: b.count)
     var r = subtract(A: b, B: dotproduct_vector(A: A, b:x))
     var p = r
-    var error = two_norm(r)
+    var error = two_norm(A: r)
     var alpha = 0.0
     var beta = 0.0
     var pt = [p]
+    var rt = [r]
     while error > threshold {
         pt = [p]
-        alpha = dotproduct_vector(A: pt, b: r)[0][0] / dotproduct_vector(A: dotproduct_matrix(A: pt, B: A), b: p)
+        rt = [r]
+        alpha = dotproduct_vector(A: pt, b: r)[0] / dotproduct_vector(A: dotproduct_matrix(A: pt, B: A), b: p)[0]
         x = addition(A: multiplication_vector(a: p, c: alpha), B: x)
         r = subtract(A: b, B: dotproduct_vector(A: A, b:x))
-        beta = (-1) * dotproduct_vector(A: dotproduct_matrix(A: pt, B: A), b: r) / dotproduct_vector(A: dotproduct_matrix(A: pt, B: A), b: p) 
+        beta = (-1) * dotproduct_vector(A: dotproduct_matrix(A: pt, B: A), b: r)[0] / dotproduct_vector(A: dotproduct_matrix(A: pt, B: A), b: p)[0] 
         p = addition(A: multiplication_vector(a: p, c: beta), B: r)
-        error = two_norm(r)
+        error = two_norm(A: r)
     }
-
+    return x
 }
 
-func two_norm(A: [Double] -> Double){
+func two_norm(A: [Double]) -> Double{
     var norm = 0.0
     for element in A{
         norm = norm + element*element
@@ -228,7 +253,7 @@ func two_norm(A: [Double] -> Double){
     return sqrt(norm)
 }
 
-var grid = Array(repeating: Array(repeating: 0.0, count: 18), count: 18)
+var grid = Array(repeating: Array(repeating: 0.0, count: 19), count: 19)
 grid[0][0] = -4
 grid[0][1] = 1
 grid[0][2] = 2
@@ -268,20 +293,20 @@ grid[9][4] = 1
 grid[9][10] = 1
 grid[9][14] = 1
 grid[10][10] = -4
-grid[10][5] = -4
-grid[10][9] = -4
-grid[10][11] = -4
-grid[10][15] = -4
+grid[10][5] = 1
+grid[10][9] = 1
+grid[10][11] = 1
+grid[10][15] = 1
 grid[11][11] = -4
-grid[11][6] = -4
-grid[11][10] = -4
-grid[11][12] = -4
-grid[11][16] = -4
+grid[11][6] = 1
+grid[11][10] = 1
+grid[11][12] = 1
+grid[11][16] = 1
 grid[12][12] = -4
-grid[12][7] = -4
-grid[12][11] = -4
-grid[12][13] = -4
-grid[12][17] = -4
+grid[12][7] = 1
+grid[12][11] = 1
+grid[12][13] = 1
+grid[12][17] = 1
 grid[13][13] = -4
 grid[13][8] = 1
 grid[13][12] = 2
@@ -305,10 +330,16 @@ grid[18][18] = -4
 grid[18][13] = 1
 grid[18][17] = 2
 
-var b = Array(repeating: 0.0, count: 18)
+var b = Array(repeating: 0.0, count: 19)
 
 b[1] = -110
 b[3] = -110
 b[6] = -110
 b[7] = -110
-b[9] = -110 
+b[8] = -110 
+
+//var test1 = choleskySolver_Optimized(A: grid, b: b)
+//print(test1)
+
+var CG_ans = CG_solve(A:grid,b:b, threshold: 0.001)
+print(CG_ans)
