@@ -580,15 +580,15 @@ func finite_difference_jacobi(h: Double, threshold: Double) -> ([[Double]], Int)
 // print(Solve_Circuit(Circuit: (Simple_Circuit_A_b(Matrix_Dir: "test_5_A_reduced.txt", Circuit_Dir: "test_5_circuit.txt")), Optimize: false))
 
 // -------------part 2 test ----------------
-var Reqs = Array(repeating: 0.0, count: 14)
-var Times = Array(repeating: 0.0, count: 14)
-var Req_counter  = 0
-for i in 2...15 {
-    (Reqs[Req_counter],Times[Req_counter]) = find_Req(N: i, R: 10000, V: 100, Optimize: true)
-    Req_counter += 1
-}
-(_,Times[0]) = find_Req(N: 2, R: 10000, V: 100, Optimize: true)
-print(Times)
+// var Reqs = Array(repeating: 0.0, count: 14)
+// var Times = Array(repeating: 0.0, count: 14)
+// var Req_counter  = 0
+// for i in 2...15 {
+//     (Reqs[Req_counter],Times[Req_counter]) = find_Req(N: i, R: 10000, V: 100, Optimize: true)
+//     Req_counter += 1
+// }
+// (_,Times[0]) = find_Req(N: 2, R: 10000, V: 100, Optimize: true)
+// print(Times)
 
 // var test1=0.0
 // var test2 = 0.0
@@ -597,18 +597,18 @@ print(Times)
 
 // -------------- part 3 test ------------------------
 // part (b)
-// let w = [1.0,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9]
-// var field: [[Double]]
-// var iterations = [0,0,0,0,0,0,0,0,0,0]
-// var sixfour_value = [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]
-// var p3_counter = 0
-// for i in w{
-//     (field,iterations[p3_counter]) = finite_difference_SOR(h: 0.02, w: i, threshold: 0.00001)
-//     sixfour_value[p3_counter] = field[Int(0.06/0.02)][Int(0.04/0.02)]
-//     p3_counter += 1
-// }
-// print(iterations)
-// print(sixfour_value)
+let w = [1.0,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9]
+var field: [[Double]]
+var iterations = [0,0,0,0,0,0,0,0,0,0]
+var sixfour_value = [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]
+var p3_counter = 0
+for i in w{
+    (field,iterations[p3_counter]) = finite_difference_SOR(h: 0.02, w: i, threshold: 0.00001)
+    sixfour_value[p3_counter] = field[Int(0.06/0.02)][Int(0.04/0.02)]
+    p3_counter += 1
+}
+print(iterations)
+print(sixfour_value)
 
 // // part (c)
 // let h = [0.02, 0.01,0.005,0.0025,0.00125]
