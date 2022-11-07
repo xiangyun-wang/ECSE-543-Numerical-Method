@@ -223,26 +223,33 @@ func choleskySolver_Optimized(A: [[Double]], b: [Double]) -> [Double]? {
     return backward(Upper: transpose(A: L!), b: y!) 
 }
 
-func CG_solve(A:[[Double]],b:[Double], threshold: Double) -> [Double]{
+func CG_solve(A:[[Double]],b:[Double], threshold: Double) -> ([Double],[Double],[Double]){
     var x = Array(repeating: 0.0, count: b.count)
     var r = subtract(A: b, B: dotproduct_vector(A: A, b:x))
     var p = r
+    var two_norm_array: [Double] = []
+    var infinity_norm_array: [Double] = []
+    var infinity_error = infinity_norm(A: r)
     var error = two_norm(A: r)
+    two_norm_array.append(error)
+    infinity_norm_array.append(infinity_error)
     var alpha = 0.0
     var beta = 0.0
     var pt = [p]
-    var rt = [r]
     while error > threshold {
         pt = [p]
-        rt = [r]
         alpha = dotproduct_vector(A: pt, b: r)[0] / dotproduct_vector(A: dotproduct_matrix(A: pt, B: A), b: p)[0]
         x = addition(A: multiplication_vector(a: p, c: alpha), B: x)
         r = subtract(A: b, B: dotproduct_vector(A: A, b:x))
         beta = (-1) * dotproduct_vector(A: dotproduct_matrix(A: pt, B: A), b: r)[0] / dotproduct_vector(A: dotproduct_matrix(A: pt, B: A), b: p)[0] 
         p = addition(A: multiplication_vector(a: p, c: beta), B: r)
         error = two_norm(A: r)
+        infinity_error = infinity_norm(A: r)
+        two_norm_array.append(error)
+        infinity_norm_array.append(infinity_error)
+
     }
-    return x
+    return (x,two_norm_array,infinity_norm_array)
 }
 
 func two_norm(A: [Double]) -> Double{
@@ -251,6 +258,16 @@ func two_norm(A: [Double]) -> Double{
         norm = norm + element*element
     }
     return sqrt(norm)
+}
+
+func infinity_norm(A: [Double]) -> Double{
+    var max: Double = 0.0
+    for element in A {
+        if max < element * element{
+            max = element * element
+        }
+    }
+    return sqrt(max)
 }
 
 var grid = Array(repeating: Array(repeating: 0.0, count: 19), count: 19)
@@ -341,5 +358,12 @@ b[8] = -110
 //var test1 = choleskySolver_Optimized(A: grid, b: b)
 //print(test1)
 
-var CG_ans = CG_solve(A:grid,b:b, threshold: 0.001)
-print(CG_ans)
+// cholesky
+var cholesky_ans = choleskySolver_Optimized(A: dotproduct_matrix(A: transpose(A: grid), B: grid), b: dotproduct_vector(A: transpose(A: grid), b: b))
+print(((cholesky_ans!)))
+// Conjugate Gradient
+
+var (CG_ans_x, CG_ans_two_norm, CG_ans_infinity_norm) = CG_solve(A:dotproduct_matrix(A: transpose(A: grid), B: grid),b:dotproduct_vector(A: transpose(A: grid), b: b), threshold: 1e-6)
+print(CG_ans_x)
+print(CG_ans_two_norm)
+print(CG_ans_infinity_norm)
