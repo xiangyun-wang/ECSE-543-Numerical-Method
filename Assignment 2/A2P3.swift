@@ -218,6 +218,7 @@ func choleskySolver_Optimized(A: [[Double]], b: [Double]) -> [Double]? {
     let band = find_half_band(A: A) 
     let (L, y) = cholesky_decomposition_optimized_bandwidth_forward(A: A, RHS: b, band: band)
     if L == nil {
+        print("Error: Matrix not SPD!!");
         return nil
     }
     return backward(Upper: transpose(A: L!), b: y!) 
@@ -356,7 +357,7 @@ b[6] = -110
 b[7] = -110
 b[8] = -110 
 
-//var test1 = choleskySolver_Optimized(A: grid, b: b)
+var test1 = choleskySolver_Optimized(A: grid, b: b)
 //print(test1)
 
 // cholesky

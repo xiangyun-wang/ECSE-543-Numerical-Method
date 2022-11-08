@@ -81,34 +81,6 @@ size(Nod2xy)
 Potential = [[1:length(Potential)]',Nod2xy',Potential];
 pot = Potential(:,4);
 
-% num = 0;
-% 
-% while(num < 46)
-%     C(num*3+1,Tri2Nod(1,num+1)) = 1;
-%     C(num*3+2,Tri2Nod(2,num+1)) = 1;
-%     C(num*3+3,Tri2Nod(3,num+1)) = 1;
-%     num = num + 1;
-% end
-% 
-% num = 0;
-% A_coefficient = 0.25 / (0.0002);
-% while(num < 46)
-%     x1 = Nod2xy(1,Tri2Nod(1,num+1));
-%     x2 = Nod2xy(1,Tri2Nod(2,num+1));
-%     x3 = Nod2xy(1,Tri2Nod(3,num+1));
-%     y1 = Nod2xy(2,Tri2Nod(1,num+1));
-%     y2 = Nod2xy(2,Tri2Nod(2,num+1));
-%     y3 = Nod2xy(2,Tri2Nod(3,num+1));
-%     Sdis(num*3 + 1, num*3 + 1) = A_coefficient * ((y2-y3)*(y2-y3)+(x3-x2)*(x3-x2));
-%     Sdis(num*3 + 1, num*3 + 2) = A_coefficient * ((y2-y1)*(y3-y1)+(x3-x2)*(x1-x3));
-%     Sdis(num*3 + 1, num*3 + 3) = A_coefficient * ((y2-y3)*(y1-y2)+(x3-x2)*(x2-x1));
-%     Sdis(num*3 + 2, num*3 + 1) = A_coefficient * ((y2-y1)*(y3-y1)+(x3-x2)*(x1-x3));
-%     Sdis(num*3 + 2, num*3 + 2) = A_coefficient * ((y3-y1)*(y3-y1)+(x1-x3)*(x1-x3));
-%     Sdis(num*3 + 2, num*3 + 3) = A_coefficient * ((y3-y1)*(y1-y2)+(x1-x3)*(x2-x1));
-%     Sdis(num*3 + 3, num*3 + 1) = A_coefficient * ((y2-y3)*(y1-y2)+(x3-x2)*(x2-x1));
-%     Sdis(num*3 + 3, num*3 + 2) = A_coefficient * ((y3-y1)*(y1-y2)+(x1-x3)*(x2-x1));
-%     Sdis(num*3 + 3, num*3 + 3) = A_coefficient * ((y1-y2)*(y1-y2)+(x2-x1)*(x2-x1));
-% end
 
 return
 
