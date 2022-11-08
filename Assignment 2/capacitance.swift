@@ -216,11 +216,9 @@ potential[33][0] = 110.0000
 
 
 
-
-
-
 let epsilon = 8.854e-12
-let total_energy = 0.5 * dotproduct_matrix(A: dotproduct_matrix(A: transpose(A: potential), B: S), B: potential)[0][0];
+let total_energy = 0.5 * dotproduct_matrix(A: dotproduct_matrix(A: transpose(A: potential), 
+    B: S), B: potential)[0][0];
 let V = 110.0
 let C = 2.0*total_energy*epsilon/(V*V) * 4
 print(C);
