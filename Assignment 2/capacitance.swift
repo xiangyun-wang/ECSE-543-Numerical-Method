@@ -220,5 +220,36 @@ let epsilon = 8.854e-12
 let total_energy = 0.5 * dotproduct_matrix(A: dotproduct_matrix(A: transpose(A: potential), 
     B: S), B: potential)[0][0];
 let V = 110.0
-let C = 2.0*total_energy*epsilon/(V*V) * 4
-print(C);
+let C_c = 2.0*total_energy*epsilon/(V*V) * 4
+print(C_c);
+
+
+
+// var C = Array(repeating: Array(repeating: 0.0, count: 4), count: 6)
+// var S_s = Array(repeating: Array(repeating: 0.0, count: 6), count: 6)
+// C[0][0] = 1
+// C[1][1] = 1
+// C[2][2] = 1
+// C[3][3] = 1
+// C[4][0] = 1
+// C[5][2] = 1
+
+// S_s[0][0] = 0.5
+// S_s[0][1] = -0.5
+// S_s[1][0] = -0.5
+// S_s[1][1] = 1
+// S_s[1][2] = -0.5
+// S_s[2][1] = -0.5
+// S_s[2][2] = 0.5
+// S_s[3][3] = 1
+// S_s[3][4] = -0.5
+// S_s[3][5] = -0.5
+// S_s[4][3] = -0.5
+// S_s[4][4] = 0.5
+// S_s[5][3] = -0.5
+// S_s[5][5] = 0.5
+
+// print("---------------------------------------")
+
+// print(dotproduct_matrix(A: dotproduct_matrix(A: transpose(A: C), 
+//     B: S_s), B: C))
