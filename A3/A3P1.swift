@@ -262,8 +262,70 @@ func Lagrange_interpolate(x_vector: [Double], y_vector: [Double], x_value: Doubl
     return y_value
 }
 
-func Cubic_Hermite(){
+func Cubic_Hermite_interpolate(x_vector: [Double], y_vector: [Double], x_value: Double) -> Double{
+    // find subdomain
+    var sub_domain_index = 0;
+    while(true){
+        if x_value == x_vector[sub_domain_index]{
+            return y_vector[sub_domain_index]
+        }
+        if x_value < x_vector[sub_domain_index] {
+            break;
+        }else{
+            sub_domain_index += 1
+            if sub_domain_index > 5{
+                sub_domain_index = 5
+                break
+            }
+        }
+    }
+    let L1 = (x_value-x_vector[sub_domain_index])/(x_vector[sub_domain_index-1] - x_vector[sub_domain_index])
+    let L2 = (x_value-x_vector[sub_domain_index-1])/(x_vector[sub_domain_index] - x_vector[sub_domain_index-1])
+    let L1_d = 1/(x_vector[sub_domain_index-1] - x_vector[sub_domain_index])
+    let L2_d = 1/(x_vector[sub_domain_index] - x_vector[sub_domain_index-1])
     
+    let U1 = (1-2*L1_d*(x_value-x_vector[sub_domain_index-1])) * (L1 * L1)
+    let U2 = (1-2*L2_d*(x_value-x_vector[sub_domain_index])) * (L2 * L2)
+    let V1 = (x_value-x_vector[sub_domain_index-1]) * (L1 * L1)
+    let V2 = (x_value-x_vector[sub_domain_index]) * (L2 * L2)
+
+    var b1 = 0.0
+    if sub_domain_index != 1 {
+        b1 = (y_vector[sub_domain_index-1]-y_vector[sub_domain_index-2]) / (x_vector[sub_domain_index-1]-x_vector[sub_domain_index-2])
+    }
+    let b2 = (y_vector[sub_domain_index]-y_vector[sub_domain_index-1]) / (x_vector[sub_domain_index]-x_vector[sub_domain_index-1])
+
+    return y_vector[sub_domain_index-1] * U1 + b1 * V1 + y_vector[sub_domain_index] * U2 + b2 * V2
 }
 
 
+var first_six_x = [0.0,0.2,0.4,0.6,0.8,1.0];
+var first_six_y = [0.0,14.7,36.5,71.7,121.4,197.4]
+
+var six_x = [0.0, 1.3, 1.4, 1.7, 1.8, 1.9]
+var six_y = [0.0, 540.6, 1062.8, 8687.4, 13924.3, 22650.2]
+
+var continuous_x = [0.00]
+for i in 1...190 {
+    continuous_x.append(0.01 * Double(i))
+}
+
+var y_Lagrange_first_six = [Double]()
+var y_Lagrange_six = [Double]()
+var y_Cubic_Hermite_six = [Double]()
+var counter = 0
+for element in continuous_x{
+
+    y_Lagrange_first_six.append(Lagrange_interpolate(x_vector: first_six_x, y_vector: first_six_y, x_value: element))
+
+    y_Lagrange_six.append(Lagrange_interpolate(x_vector: six_x, y_vector: six_y, x_value: element))
+
+    y_Cubic_Hermite_six.append(Cubic_Hermite_interpolate(x_vector: six_x, y_vector: six_y, x_value: element))
+}
+
+// print(y_Lagrange_first_six)
+// print(continuous_x)
+
+// print(y_Lagrange_six)
+
+// print(y_Cubic_Hermite_six)
