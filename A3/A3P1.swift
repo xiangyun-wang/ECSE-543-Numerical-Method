@@ -242,6 +242,8 @@ func infinity_norm(A: [Double]) -> Double{
     return sqrt(max)
 }
 
+// ================== A3 Q1 ab =============================
+
 func Lagrange_L(current_order: Int, x_vector: [Double], x_value: Double) -> Double{
     var numerator_L = 1.0;
     var denominator_L = 1.0;
@@ -261,7 +263,7 @@ func Lagrange_interpolate(x_vector: [Double], y_vector: [Double], x_value: Doubl
     }
     return y_value
 }
-
+// =============== A3 Q1 c ==============================
 func Cubic_Hermite_interpolate(x_vector: [Double], y_vector: [Double], x_value: Double) -> Double{
     // find subdomain
     var sub_domain_index = 0;
@@ -298,34 +300,41 @@ func Cubic_Hermite_interpolate(x_vector: [Double], y_vector: [Double], x_value: 
     return y_vector[sub_domain_index-1] * U1 + b1 * V1 + y_vector[sub_domain_index] * U2 + b2 * V2
 }
 
+// =============== A3 Q1 d e f =====================
 
-var first_six_x = [0.0,0.2,0.4,0.6,0.8,1.0];
-var first_six_y = [0.0,14.7,36.5,71.7,121.4,197.4]
+// =============== A3 Q2 ===========================
 
-var six_x = [0.0, 1.3, 1.4, 1.7, 1.8, 1.9]
-var six_y = [0.0, 540.6, 1062.8, 8687.4, 13924.3, 22650.2]
 
-var continuous_x = [0.00]
-for i in 1...190 {
-    continuous_x.append(0.01 * Double(i))
-}
+// ============= A3 Q1 abc testing =================
 
-var y_Lagrange_first_six = [Double]()
-var y_Lagrange_six = [Double]()
-var y_Cubic_Hermite_six = [Double]()
-var counter = 0
-for element in continuous_x{
+// var first_six_x = [0.0,0.2,0.4,0.6,0.8,1.0];
+// var first_six_y = [0.0,14.7,36.5,71.7,121.4,197.4]
 
-    y_Lagrange_first_six.append(Lagrange_interpolate(x_vector: first_six_x, y_vector: first_six_y, x_value: element))
+// var six_x = [0.0, 1.3, 1.4, 1.7, 1.8, 1.9]
+// var six_y = [0.0, 540.6, 1062.8, 8687.4, 13924.3, 22650.2]
 
-    y_Lagrange_six.append(Lagrange_interpolate(x_vector: six_x, y_vector: six_y, x_value: element))
+// var continuous_x = [0.00]
+// for i in 1...190 {
+//     continuous_x.append(0.01 * Double(i))
+// }
 
-    y_Cubic_Hermite_six.append(Cubic_Hermite_interpolate(x_vector: six_x, y_vector: six_y, x_value: element))
-}
+// var y_Lagrange_first_six = [Double]()
+// var y_Lagrange_six = [Double]()
+// var y_Cubic_Hermite_six = [Double]()
+// var counter = 0
+// for element in continuous_x{
+//     y_Lagrange_first_six.append(Lagrange_interpolate(x_vector: first_six_x, y_vector: first_six_y, x_value: element))
+//     y_Lagrange_six.append(Lagrange_interpolate(x_vector: six_x, y_vector: six_y, x_value: element))
+//     y_Cubic_Hermite_six.append(Cubic_Hermite_interpolate(x_vector: six_x, y_vector: six_y, x_value: element))
+//}
 
 // print(y_Lagrange_first_six)
 // print(continuous_x)
-
 // print(y_Lagrange_six)
-
 // print(y_Cubic_Hermite_six)
+
+// ============== A3 Q1 def testing ==============
+
+
+
+// ============== A3 Q2 testing ==================
