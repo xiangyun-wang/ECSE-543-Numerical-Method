@@ -302,6 +302,63 @@ func Cubic_Hermite_interpolate(x_vector: [Double], y_vector: [Double], x_value: 
 
 // =============== A3 Q1 d e f =====================
 
+func Newton_Raphson(guess: Double, threshold: Double, X: [Double], Y: [Double]) -> (Double,Int){
+    var output = guess
+    //var f_guess = Evaluate_Nonlinear_Function(input: guess, X: X, Y: Y) 
+    let f_0 = Evaluate_Nonlinear_Function(input: 0.0, X: X, Y: Y)
+    var iteration = 0
+    while (abs(Evaluate_Nonlinear_Function(input: output, X: X, Y: Y)/f_0) > threshold){
+        output -= Evaluate_Nonlinear_Function(input: output, X: X, Y: Y)/Nonlinear_Derivative(input: output, X: X, Y: Y)
+        iteration += 1
+    }
+    return (output,iteration)
+}
+
+func Evaluate_Nonlinear_Function(input: Double, X: [Double], Y: [Double]) -> Double{
+    //let B = [0.0,0.2,0.4,0.6,0.8,1.0,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9]
+    //let H = [0.0,14.7,36.5,71.7,121.4,197.4,256.2,348.7,540.6,1062.8,2318.0,4781.9,8687.4,13924.3,22650.2]
+    return 3.97887 * 1e7 * input + 0.3 * Piecewise(input: input, X: X, Y: Y) - 8000
+}
+
+func Evaluate_Nonlinear_Function_Derivative(input: Double, X: [Double], Y: [Double]) -> Double{
+    //let B = [0.0,0.2,0.4,0.6,0.8,1.0,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9]
+    //let H = [0.0,14.7,36.5,71.7,121.4,197.4,256.2,348.7,540.6,1062.8,2318.0,4781.9,8687.4,13924.3,22650.2]
+    return 3.97887 * 1e7 + 0.3 * Nonlinear_Derivative(input: input, X: X, Y: Y)
+}
+
+func Nonlinear_Derivative(input: Double, X: [Double], Y: [Double]) -> Double{
+    var index = X.count-1
+    for i in 1...X.count-1 {
+        if input < X[i]{
+            index = i
+            break
+        }
+    }
+    return (Y[index]-Y[index-1])/(X[index]-X[index-1])
+}
+
+func Piecewise(input: Double, X: [Double], Y: [Double]) -> Double{
+    var index = X.count-1
+    for i in 1...X.count-1 {
+        if input < X[i]{
+            index = i-1
+            break
+        }
+    }
+    let slope = Nonlinear_Derivative(input: input, X: X, Y: Y)
+    return Y[index] + (input-X[index]) * slope    
+}
+
+func Successive_Sub(guess: Double, threshold: Double, X: [Double], Y: [Double]) -> (Double,Int){
+    let f_0 = Evaluate_Nonlinear_Function(input: 0.0, X: X, Y: Y)
+    var output = guess
+    iteration = 0
+    while(abs(Evaluate_Nonlinear_Function(input: output, X: X, Y: Y)/f_0) > threshold){
+        output = output - Evaluate_Nonlinear_Function(input: output, X: X, Y: Y)/(3.97887*1e7)*1e-3
+    }
+    return (output,iteration)
+}
+
 // =============== A3 Q2 ===========================
 
 
@@ -334,6 +391,12 @@ func Cubic_Hermite_interpolate(x_vector: [Double], y_vector: [Double], x_value: 
 // print(y_Cubic_Hermite_six)
 
 // ============== A3 Q1 def testing ==============
+// let B = [0.0e-4,0.2e-4,0.4e-4,0.6e-4,0.8e-4,1.0e-4,1.1e-4,1.2e-4,1.3e-4,1.4e-4,1.5e-4,1.6e-4,1.7e-4,1.8e-4,1.9e-4]
+// let H = [0.0,14.7,36.5,71.7,121.4,197.4,256.2,348.7,540.6,1062.8,2318.0,4781.9,8687.4,13924.3,22650.2]
+// var (answer,iteration) = Newton_Raphson(guess: 0.0, threshold: 1e-6, X: B, Y: H)
+// print(answer)
+// var (answer_2,iteration_2) = Successive_Sub(guess: 0.0000000000000000000000000000001, threshold: 1e-6, X: B, Y: H)
+// print(answer_2)
 
 
 
