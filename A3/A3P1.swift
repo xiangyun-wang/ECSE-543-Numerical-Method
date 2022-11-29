@@ -352,12 +352,48 @@ func Piecewise(input: Double, X: [Double], Y: [Double]) -> Double{
 func Successive_Sub(guess: Double, threshold: Double, X: [Double], Y: [Double]) -> (Double,Int){
     let f_0 = Evaluate_Nonlinear_Function(input: 0.0, X: X, Y: Y)
     var output = guess
-    iteration = 0
+    var iteration = 0
     while(abs(Evaluate_Nonlinear_Function(input: output, X: X, Y: Y)/f_0) > threshold){
         output = output - Evaluate_Nonlinear_Function(input: output, X: X, Y: Y)/(3.97887*1e7)*1e-3
+        iteration += 1
     }
     return (output,iteration)
 }
+
+func Q3_Jaccobian(X: [Double]) -> [[Double]]{
+    var output = Array(repeating: Array(repeating: 0.0, count: 2), count: 2)
+    output[0][0] = 1/512 + (1/(25e-3))*0.8e-6 * exp((X[0]-X[1])/(25e-3))
+    output[0][1] = (-1)*(1/(25e-3))*0.8e-6 * exp((X[0]-X[1])/(25e-3))
+    output[1][0] = (-1) * (1/(25e-3))*0.8e-6 * exp((X[0]-X[1])/(25e-3))
+    output[1][1] = (1/(25e-3))*1.1e-6 * exp((X[1])/(25e-3)) + (1/(25e-3))*0.8e-6 * exp((X[0]-X[1])/(25e-3))
+    return output
+}
+
+func Q3_F_Eva(X: [Double]) -> [Double]{
+    var output = [0.0, 0.0]
+    output[0] = (X[0]-0.2)/512 + 0.8e-6 * (exp((X[0]-X[1])/(25e-3))-1)
+    output[1] = 1.1e-6 * (exp((X[1])/(25e-3))-1) - 0.8e-6 * (exp((X[0]-X[1])/(25e-3))-1)
+
+    return output
+}
+
+func Q3_NR(guess: [Double], threshold: Double) -> [Double]{
+    var X = guess
+    var f_value = [0.0,0.0]
+    var f_d = [[0.0,0.0],[0.0,0.0]]
+    var delta_x = [0.0,0.0]
+    while(true){
+        f_value = Q3_F_Eva(X: X)
+        f_d = Q3_Jaccobian(X: X)
+        delta_x = choleskySolver(A: f_d,b: f_value)!
+        X = subtract(A: X, B: delta_x)
+        if two_norm(A: delta_x) < threshold{
+            return X
+        }
+    }
+}
+
+
 
 // =============== A3 Q2 ===========================
 
@@ -401,3 +437,5 @@ func Successive_Sub(guess: Double, threshold: Double, X: [Double], Y: [Double]) 
 
 
 // ============== A3 Q2 testing ==================
+var answer = Q3_NR(guess: [0.0,0.0],threshold: 1e-6)
+print(answer)
