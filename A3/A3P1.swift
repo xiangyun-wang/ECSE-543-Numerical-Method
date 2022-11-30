@@ -304,7 +304,6 @@ func Cubic_Hermite_interpolate(x_vector: [Double], y_vector: [Double], x_value: 
 
 func Newton_Raphson(guess: Double, threshold: Double, X: [Double], Y: [Double]) -> (Double,Int){
     var output = guess
-    //var f_guess = Evaluate_Nonlinear_Function(input: guess, X: X, Y: Y) 
     let f_0 = Evaluate_Nonlinear_Function(input: 0.0, X: X, Y: Y)
     var iteration = 0
     while (abs(Evaluate_Nonlinear_Function(input: output, X: X, Y: Y)/f_0) > threshold){
@@ -315,14 +314,10 @@ func Newton_Raphson(guess: Double, threshold: Double, X: [Double], Y: [Double]) 
 }
 
 func Evaluate_Nonlinear_Function(input: Double, X: [Double], Y: [Double]) -> Double{
-    //let B = [0.0,0.2,0.4,0.6,0.8,1.0,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9]
-    //let H = [0.0,14.7,36.5,71.7,121.4,197.4,256.2,348.7,540.6,1062.8,2318.0,4781.9,8687.4,13924.3,22650.2]
     return 3.97887 * 1e7 * input + 0.3 * Piecewise(input: input, X: X, Y: Y) - 8000
 }
 
 func Evaluate_Nonlinear_Function_Derivative(input: Double, X: [Double], Y: [Double]) -> Double{
-    //let B = [0.0,0.2,0.4,0.6,0.8,1.0,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9]
-    //let H = [0.0,14.7,36.5,71.7,121.4,197.4,256.2,348.7,540.6,1062.8,2318.0,4781.9,8687.4,13924.3,22650.2]
     return 3.97887 * 1e7 + 0.3 * Nonlinear_Derivative(input: input, X: X, Y: Y)
 }
 
@@ -354,13 +349,13 @@ func Successive_Sub(guess: Double, threshold: Double, X: [Double], Y: [Double]) 
     var output = guess
     var iteration = 0
     while(abs(Evaluate_Nonlinear_Function(input: output, X: X, Y: Y)/f_0) > threshold){
-        output = output - Evaluate_Nonlinear_Function(input: output, X: X, Y: Y)/(3.97887*1e7)*1e-3
+        output = output - Evaluate_Nonlinear_Function(input: output, X: X, Y: Y)/(3.97887*1e7) * 1e-3 // smaller step size
         iteration += 1
     }
     return (output,iteration)
 }
 
-func Q3_Jaccobian(X: [Double]) -> [[Double]]{
+func Q2_Jaccobian(X: [Double]) -> [[Double]]{
     var output = Array(repeating: Array(repeating: 0.0, count: 2), count: 2)
     output[0][0] = 1/512 + (1/(25e-3))*0.8e-6 * exp((X[0]-X[1])/(25e-3))
     output[0][1] = (-1)*(1/(25e-3))*0.8e-6 * exp((X[0]-X[1])/(25e-3))
@@ -369,7 +364,7 @@ func Q3_Jaccobian(X: [Double]) -> [[Double]]{
     return output
 }
 
-func Q3_F_Eva(X: [Double]) -> [Double]{
+func Q2_F_Eva(X: [Double]) -> [Double]{
     var output = [0.0, 0.0]
     output[0] = (X[0]-0.2)/512 + 0.8e-6 * (exp((X[0]-X[1])/(25e-3))-1)
     output[1] = 1.1e-6 * (exp((X[1])/(25e-3))-1) - 0.8e-6 * (exp((X[0]-X[1])/(25e-3))-1)
@@ -377,18 +372,24 @@ func Q3_F_Eva(X: [Double]) -> [Double]{
     return output
 }
 
-func Q3_NR(guess: [Double], threshold: Double) -> [Double]{
+func Q2_NR(guess: [Double], threshold: Double) -> ([Double],[Double],[[Double]],[[Double]]){
     var X = guess
     var f_value = [0.0,0.0]
     var f_d = [[0.0,0.0],[0.0,0.0]]
     var delta_x = [0.0,0.0]
+    var f_set = [[Double]]()
+    var x_set = [[Double]]()
+    var delta_set = [Double]()
     while(true){
-        f_value = Q3_F_Eva(X: X)
-        f_d = Q3_Jaccobian(X: X)
+        f_value = Q2_F_Eva(X: X)
+        f_set.append(f_value)
+        f_d = Q2_Jaccobian(X: X)
         delta_x = choleskySolver(A: f_d,b: f_value)!
         X = subtract(A: X, B: delta_x)
+        x_set.append(X)
+        delta_set.append(two_norm(A: delta_x))
         if two_norm(A: delta_x) < threshold{
-            return X
+            return (X,delta_set, f_set, x_set)
         }
     }
 }
@@ -400,42 +401,53 @@ func Q3_NR(guess: [Double], threshold: Double) -> [Double]{
 
 // ============= A3 Q1 abc testing =================
 
-// var first_six_x = [0.0,0.2,0.4,0.6,0.8,1.0];
-// var first_six_y = [0.0,14.7,36.5,71.7,121.4,197.4]
+var first_six_x = [0.0,0.2,0.4,0.6,0.8,1.0];
+var first_six_y = [0.0,14.7,36.5,71.7,121.4,197.4]
 
-// var six_x = [0.0, 1.3, 1.4, 1.7, 1.8, 1.9]
-// var six_y = [0.0, 540.6, 1062.8, 8687.4, 13924.3, 22650.2]
+var six_x = [0.0, 1.3, 1.4, 1.7, 1.8, 1.9]
+var six_y = [0.0, 540.6, 1062.8, 8687.4, 13924.3, 22650.2]
 
-// var continuous_x = [0.00]
-// for i in 1...190 {
-//     continuous_x.append(0.01 * Double(i))
-// }
+var continuous_x = [0.00]
+for i in 1...190 {
+    continuous_x.append(0.01 * Double(i))
+}
 
-// var y_Lagrange_first_six = [Double]()
-// var y_Lagrange_six = [Double]()
-// var y_Cubic_Hermite_six = [Double]()
-// var counter = 0
-// for element in continuous_x{
-//     y_Lagrange_first_six.append(Lagrange_interpolate(x_vector: first_six_x, y_vector: first_six_y, x_value: element))
-//     y_Lagrange_six.append(Lagrange_interpolate(x_vector: six_x, y_vector: six_y, x_value: element))
-//     y_Cubic_Hermite_six.append(Cubic_Hermite_interpolate(x_vector: six_x, y_vector: six_y, x_value: element))
-//}
+var y_Lagrange_first_six = [Double]()
+var y_Lagrange_six = [Double]()
+var y_Cubic_Hermite_six = [Double]()
+var counter = 0
+for element in continuous_x{
+    y_Lagrange_first_six.append(Lagrange_interpolate(x_vector: first_six_x, y_vector: first_six_y, x_value: element))
+    y_Lagrange_six.append(Lagrange_interpolate(x_vector: six_x, y_vector: six_y, x_value: element))
+    y_Cubic_Hermite_six.append(Cubic_Hermite_interpolate(x_vector: six_x, y_vector: six_y, x_value: element))
+}
 
-// print(y_Lagrange_first_six)
-// print(continuous_x)
-// print(y_Lagrange_six)
-// print(y_Cubic_Hermite_six)
+print(y_Lagrange_first_six)
+print(continuous_x)
+print(y_Lagrange_six)
+print(y_Cubic_Hermite_six)
 
 // ============== A3 Q1 def testing ==============
-// let B = [0.0e-4,0.2e-4,0.4e-4,0.6e-4,0.8e-4,1.0e-4,1.1e-4,1.2e-4,1.3e-4,1.4e-4,1.5e-4,1.6e-4,1.7e-4,1.8e-4,1.9e-4]
-// let H = [0.0,14.7,36.5,71.7,121.4,197.4,256.2,348.7,540.6,1062.8,2318.0,4781.9,8687.4,13924.3,22650.2]
-// var (answer,iteration) = Newton_Raphson(guess: 0.0, threshold: 1e-6, X: B, Y: H)
-// print(answer)
-// var (answer_2,iteration_2) = Successive_Sub(guess: 0.0000000000000000000000000000001, threshold: 1e-6, X: B, Y: H)
-// print(answer_2)
+let B = [0.0e-4,0.2e-4,0.4e-4,0.6e-4,0.8e-4,1.0e-4,1.1e-4,1.2e-4,1.3e-4,1.4e-4,1.5e-4,1.6e-4,1.7e-4,1.8e-4,1.9e-4]
+let H = [0.0,14.7,36.5,71.7,121.4,197.4,256.2,348.7,540.6,1062.8,2318.0,4781.9,8687.4,13924.3,22650.2]
+var (answer,iteration) = Newton_Raphson(guess: 0.0, threshold: 1e-6, X: B, Y: H)
+print("Newton Raphson: ")
+print(answer)
+print("Iteration: ")
+print(iteration)
+print("Successive Substitution: ")
+var (answer_2,iteration_2) = Successive_Sub(guess: 0.0, threshold: 1e-6, X: B, Y: H)
+print(answer_2)
 
 
 
 // ============== A3 Q2 testing ==================
-var answer = Q3_NR(guess: [0.0,0.0],threshold: 1e-6)
+var (answer,delta,f_values, x_values) = Q2_NR(guess: [0.0,0.0],threshold: 1e-6)
+print("Final Converged Node Voltages: [V1, V2]")
 print(answer)
+print("Delta X: ")
+print(delta)
+print("f(Vn) Values: ([f1(Vn), f2(Vn)])")
+print(f_values)
+print("Vn Values: ([V1, V2])")
+print(x_values)
